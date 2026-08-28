@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-ib$(lm-+5+dnna3_osd+al8w4ch0-72d(zkf_#d(i7#ym$62n*"
+# En prod, définir DJANGO_SECRET_KEY dans l'environnement ; le fallback ci-dessous
+# n'est là que pour permettre `runserver` en local sans configuration.
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-ib$(lm-+5+dnna3_osd+al8w4ch0-72d(zkf_#d(i7#ym$62n*",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if h.strip()
+]
+
+# Clé API exigée sur les endpoints /api/ (header X-API-Key). La valeur par défaut
+# n'existe que pour permettre les tests/dev locaux sans configuration : à définir
+# via la variable d'environnement API_KEY dans tout déploiement réel.
+API_KEY = os.environ.get("API_KEY", "dev-demo-key")
 
 
 # Application definition

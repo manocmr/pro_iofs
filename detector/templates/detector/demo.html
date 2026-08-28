@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FraudGuard — Détecteur de fraude</title>
+<style>
+  :root {
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --border: #e2e6ea;
+    --text: #1f2933;
+    --muted: #6b7684;
+    --brand: #2563eb;
+    --brand-dark: #1d4ed8;
+    --low: #16a34a;
+    --low-bg: #e9f9ee;
+    --medium: #d97706;
+    --medium-bg: #fef3e2;
+    --high: #dc2626;
+    --high-bg: #fde9e9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header {
+    background: var(--brand);
+    color: white;
+    padding: 28px 20px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 6px; font-size: 1.6rem; }
+  header p { margin: 0; opacity: 0.9; font-size: 0.95rem; }
+
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    margin: 0 0 4px;
+    font-size: 1.15rem;
+  }
+  .card .subtitle {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  textarea, input {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fbfcfd;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  textarea:focus, input:focus {
+    outline: none;
+    border-color: var(--brand);
+    background: white;
+  }
+  textarea { min-height: 90px; resize: vertical; }
+
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 160px; }
+
+  button {
+    background: var(--brand);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: var(--brand-dark); }
+  button:disabled { background: #a9b4c0; cursor: wait; }
+
+  button.secondary {
+    background: white;
+    color: var(--brand);
+    border: 1px solid var(--brand);
+  }
+  button.secondary:hover { background: #eef2ff; }
+
+  .result { margin-top: 18px; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .badge.LOW-RISK, .badge.LOW { background: var(--low-bg); color: var(--low); }
+  .badge.MEDIUM-RISK, .badge.MEDIUM { background: var(--medium-bg); color: var(--medium); }
+  .badge.HIGH-RISK-FRAUD, .badge.HIGH { background: var(--high-bg); color: var(--high); }
+
+  .score { font-size: 0.95rem; color: var(--muted); margin-left: 6px; }
+
+  ul.reasons {
+    margin: 14px 0 0;
+    padding-left: 20px;
+    color: var(--text);
+  }
+  ul.reasons li { margin-bottom: 6px; font-size: 0.92rem; }
+  ul.reasons.empty { list-style: none; padding-left: 0; color: var(--muted); font-style: italic; }
+
+  .error {
+    background: var(--high-bg);
+    color: var(--high);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-top: 14px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .stat-tile {
+    background: #fbfcfd;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-tile .value { font-size: 1.6rem; font-weight: 700; }
+  .stat-tile .label { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+  .placeholder { color: var(--muted); font-size: 0.9rem; font-style: italic; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🛡️ FraudGuard</h1>
+  <p>Détecteur de fraude SMS &amp; transactions mobile money — démo</p>
+</header>
+
+<main>
+
+  <section class="card">
+    <h2>Analyser un SMS</h2>
+    <p class="subtitle">Colle un message reçu par SMS pour vérifier s'il ressemble à une arnaque.</p>
+
+    <label for="sms-message">Contenu du SMS</label>
+    <textarea id="sms-message" placeholder="Ex: Votre compte mobile money est bloqué, composez *123# et entrez votre code pin"></textarea>
+
+    <label for="sms-sender">Numéro de l'expéditeur (optionnel)</label>
+    <input id="sms-sender" type="text" placeholder="Ex: +225700000">
+
+    <button id="sms-btn" onclick="analyzeSms()">Analyser le SMS</button>
+
+    <div id="sms-result" class="result"></div>
+  </section>
+
+  <section class="card">
+    <h2>Analyser une transaction</h2>
+    <p class="subtitle">Vérifie si une transaction est anormale par rapport à l'historique du compte.</p>
+
+    <div class="row">
+      <div>
+        <label for="txn-account">Identifiant du compte</label>
+        <input id="txn-account" type="text" placeholder="Ex: acc-12345">
+      </div>
+      <div>
+        <label for="txn-amount">Montant</label>
+        <input id="txn-amount" type="number" placeholder="Ex: 50000">
+      </div>
+    </div>
+
+    <button id="txn-btn" onclick="analyzeTransaction()">Analyser la transaction</button>
+
+    <div id="txn-result" class="result"></div>
+  </section>
+
+  <section class="card">
+    <h2>Statistiques</h2>
+    <p class="subtitle">Vue d'ensemble de toutes les analyses effectuées.</p>
+
+    <button class="secondary" onclick="loadStats()">Rafraîchir les statistiques</button>
+
+    <div id="stats-result" class="result">
+      <p class="placeholder">Clique sur le bouton pour charger les statistiques.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>FraudGuard — prototype de détection de fraude financière</footer>
+
+<script>
+const API_KEY = "{{ api_key }}";
+
+function labelClass(label) {
+  return label.replace(/\s+/g, "-").toUpperCase();
+}
+
+function labelText(label) {
+  const map = {
+    "LOW-RISK": "Risque faible",
+    "MEDIUM-RISK": "Risque moyen",
+    "HIGH-RISK FRAUD": "Fraude probable",
+  };
+  return map[label] || label;
+}
+
+async function callApi(path, body) {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-Key": API_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Une erreur est survenue.");
+  }
+  return data;
+}
+
+function renderResult(containerId, data) {
+  const container = document.getElementById(containerId);
+  const cls = labelClass(data.label);
+  const reasonsHtml = data.reasons && data.reasons.length
+    ? `<ul class="reasons">${data.reasons.map(r => `<li>${r}</li>`).join("")}</ul>`
+    : `<ul class="reasons empty"><li>Aucun signal suspect détecté.</li></ul>`;
+
+  container.innerHTML = `
+    <span class="badge ${cls}">${labelText(data.label)}</span>
+    <span class="score">${data.risk_score}/100</span>
+    ${reasonsHtml}
+  `;
+}
+
+function renderError(containerId, message) {
+  document.getElementById(containerId).innerHTML = `<div class="error">${message}</div>`;
+}
+
+async function analyzeSms() {
+  const message = document.getElementById("sms-message").value.trim();
+  const sender = document.getElementById("sms-sender").value.trim();
+  const btn = document.getElementById("sms-btn");
+
+  if (!message) {
+    renderError("sms-result", "Merci de coller un message avant d'analyser.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Analyse en cours...";
+  try {
+    const data = await callApi("/api/analyze/", { message, sender });
+    renderResult("sms-result", data);
+  } catch (err) {
+    renderError("sms-result", err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Analyser le SMS";
+  }
+}
+
+async function analyzeTransaction() {
+  const accountId = document.getElementById("txn-account").value.trim();
+  const amount = document.getElementById("txn-amount").value;
+  const btn = document.getElementById("txn-btn");
+
+  if (!accountId || !amount) {
+    renderError("txn-result", "Merci de renseigner le compte et le montant.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Analyse en cours...";
+  try {
+    const data = await callApi("/api/transactions/analyze/", {
+      account_id: accountId,
+      amount: parseFloat(amount),
+    });
+    renderResult("txn-result", data);
+  } catch (err) {
+    renderError("txn-result", err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Analyser la transaction";
+  }
+}
+
+async function loadStats() {
+  const container = document.getElementById("stats-result");
+  container.innerHTML = `<p class="placeholder">Chargement...</p>`;
+  try {
+    const response = await fetch("/api/stats/", {
+      headers: { "X-API-Key": API_KEY },
+    });
+    const data = await response.json();
+
+    const tiles = Object.entries(data.by_label).map(([label, count]) => `
+      <div class="stat-tile">
+        <div class="value">${count}</div>
+        <div class="label">${labelText(label)}</div>
+      </div>
+    `).join("");
+
+    const topReasons = data.top_reasons.length
+      ? `<ul class="reasons">${data.top_reasons.map(r => `<li>${r.reason} <span class="score">(${r.count}×)</span></li>`).join("")}</ul>`
+      : `<p class="placeholder">Aucune raison enregistrée pour l'instant.</p>`;
+
+    const repeatSenders = data.repeat_senders.length
+      ? `<ul class="reasons">${data.repeat_senders.map(s => `<li>${s.sender} — ${s.count} signalements</li>`).join("")}</ul>`
+      : `<p class="placeholder">Aucun numéro récidiviste pour l'instant.</p>`;
+
+    container.innerHTML = `
+      <div class="stat-tile" style="margin-bottom:14px;">
+        <div class="value">${data.total_analyses}</div>
+        <div class="label">Analyses au total</div>
+      </div>
+      <div class="stats-grid">${tiles || '<p class="placeholder">Aucune donnée.</p>'}</div>
+      <h3 style="font-size:0.95rem;margin-bottom:6px;">Raisons les plus fréquentes</h3>
+      ${topReasons}
+      <h3 style="font-size:0.95rem;margin:16px 0 6px;">Numéros récidivistes</h3>
+      ${repeatSenders}
+    `;
+  } catch (err) {
+    renderError("stats-result", "Impossible de charger les statistiques.");
+  }
+}
+</script>
+
+</body>
+</html>
